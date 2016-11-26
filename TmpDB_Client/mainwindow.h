@@ -17,6 +17,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
+private slots:
+    void refreshObjectListFromSM();
 };
 
 #endif // MAINWINDOW_H
