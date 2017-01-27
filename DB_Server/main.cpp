@@ -28,5 +28,6 @@ int main()
     } while(c != 'q');
 
     shmdt(shm);
+    shmctl(shm_id, IPC_RMID, NULL);
     return 0;
 }
