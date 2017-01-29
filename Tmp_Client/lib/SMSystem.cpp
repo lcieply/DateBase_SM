@@ -1,4 +1,5 @@
 #include "SMSystem.h"
+using namespace sm;
 
 //==========SMSystem===========
 
@@ -8,7 +9,9 @@ SMSystem::SMSystem() {
     dataAllocator = new CharAllocator(memory.get_segment_manager());
 }
 
-SMSystem::~SMSystem() {}
+SMSystem::~SMSystem() {
+    delete(dataAllocator);
+}
 
 void SMSystem::remove(const char *key) {
     mtx->lock();
@@ -37,7 +40,9 @@ bool SMSystem::contains(const char *key) {
 
 //==========SMObject===========
 
-SMObject::~SMObject() {}
+SMObject::~SMObject() {
+
+}
 
 //========SMContainer==========
 
@@ -47,5 +52,3 @@ SMContainer::SMContainer(SMObject *obj, CharAllocator& dataAllocator) {
     data = new SMBuffer(dataAllocator);
     *data << objData.str().c_str();
 }
-
-SMContainer::~SMContainer() {}

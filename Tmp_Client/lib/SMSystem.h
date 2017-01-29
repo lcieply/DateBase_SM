@@ -13,141 +13,140 @@
 using namespace boost::archive;
 using namespace boost::interprocess;
 
-typedef allocator<char, managed_shared_memory::segment_manager> CharAllocator;
-typedef basic_string <char, std::char_traits<char>, CharAllocator> SMString;
-typedef basic_vectorstream<SMString> SMBuffer;
+namespace sm {
+    typedef allocator<char, managed_shared_memory::segment_manager> CharAllocator;
+    typedef basic_string <char, std::char_traits<char>, CharAllocator> SMString;
+    typedef basic_vectorstream<SMString> SMBuffer;
 
-class WrongTypeException: public std::exception
-{
-public:
-    virtual const char* what() const throw()
+    class WrongTypeException: public std::exception
     {
-        return "Wrong object type";
-    }
-};
+    public:
+        virtual const char* what() const throw()
+        {
+            return "Wrong object type";
+        }
+    };
 
-class SMSystemException: public std::exception
-{
-public:
-    virtual const char* what() const throw()
+    class SMSystemException: public std::exception
     {
-        return "Shared memory operation not allowed!";
-    }
-};
-
-class SMObject {
-public:
-    virtual std::stringstream getSerializedData() = 0;
-    virtual ~SMObject();
-};
-
-class SMContainer {
-public:
-    SMBuffer* data;
-    SMString* type;
-
-    SMContainer(SMObject* obj, CharAllocator&);
-    ~SMContainer();
-
-    template<class T>
-    void getObject(T& obj) {
-        if(strcmp((*type).c_str(), typeid(obj).name()) != 0) {
-            throw WrongTypeException();
+    public:
+        virtual const char* what() const throw()
+        {
+            return "Shared memory operation not allowed!";
         }
-        text_iarchive ia(*data);
-        ia >> obj;
-    }
-};
+    };
 
-class SMSystem {
-private:
-    managed_shared_memory memory;
-    interprocess_mutex* mtx;
-    CharAllocator* dataAllocator;
+    class SMObject {
+    public:
+        virtual std::stringstream getSerializedData() = 0;
+        virtual ~SMObject();
+    };
 
-public:
-    SMSystem();
-    ~SMSystem();
-    void remove(const char* key);
-    bool contains(const char* key);
+    class SMContainer {
+    public:
+        SMBuffer* data;
+        SMString* type;
 
-    template<class T> void fetch(const char* key, T& object) {
-        if(std::is_base_of<SMObject, T>::value) {
-            mtx->lock();
-            std::pair<SMContainer*, managed_shared_memory::size_type> res;
-            try {
-                 res = memory.find<SMContainer>(key);
-            } catch (interprocess_exception e) {
-                mtx->unlock();
-                throw SMSystemException();
+        SMContainer(SMObject* obj, CharAllocator&);
+
+        template<class T>
+        void getObject(T& obj) {
+            if(strcmp((*type).c_str(), typeid(obj).name()) != 0) {
+                throw WrongTypeException();
             }
-            try {
-                res.first->getObject(object);
-            } catch (WrongTypeException e) {
-                mtx->unlock();
-                throw e;
-            }
-            mtx->unlock();
-        } else {
-            throw WrongTypeException();
+            text_iarchive ia(*data);
+            ia >> obj;
         }
-    }
+    };
 
-    template<class T> void insert(const char* key, T* object) {
-        if(std::is_base_of<SMObject, T>::value) {
-            mtx->lock();
-            try {
-                memory.construct<SMContainer>(key)(object, *dataAllocator);
-            } catch (interprocess_exception e) {
+    class SMSystem {
+    private:
+        managed_shared_memory memory;
+        interprocess_mutex* mtx;
+        CharAllocator* dataAllocator;
+
+    public:
+        SMSystem();
+        ~SMSystem();
+        void remove(const char* key);
+        bool contains(const char* key);
+
+        template<class T> void fetch(const char* key, T& object) {
+            if(std::is_base_of<SMObject, T>::value) {
+                mtx->lock();
+                std::pair<SMContainer*, managed_shared_memory::size_type> res;
+                try {
+                    res = memory.find<SMContainer>(key);
+                } catch (interprocess_exception e) {
+                    mtx->unlock();
+                    throw SMSystemException();
+                }
+                try {
+                    res.first->getObject(object);
+                } catch (WrongTypeException e) {
+                    mtx->unlock();
+                    throw e;
+                }
                 mtx->unlock();
-                throw SMSystemException();
+            } else {
+                throw WrongTypeException();
             }
-            mtx->unlock();
-        } else {
-            throw WrongTypeException();
         }
-    }
 
-    template<class T> void update(const char* key, T* object) {
-        if(std::is_base_of<SMObject, T>::value) {
-            mtx->lock();
-            try {
-                memory.destroy<SMContainer>(key);
-                memory.construct<SMContainer>(key)(object, *dataAllocator);
-            } catch (interprocess_exception e) {
+        template<class T> void insert(const char* key, T* object) {
+            if(std::is_base_of<SMObject, T>::value) {
+                mtx->lock();
+                try {
+                    memory.construct<SMContainer>(key)(object, *dataAllocator);
+                } catch (interprocess_exception e) {
+                    mtx->unlock();
+                    throw SMSystemException();
+                }
                 mtx->unlock();
-                throw SMSystemException();
+            } else {
+                throw WrongTypeException();
             }
-            mtx->unlock();
-        } else {
-            throw WrongTypeException();
         }
-    }
-};
 
-//============SIMPLE CLASS============
+        template<class T> void update(const char* key, T* object) {
+            if(std::is_base_of<SMObject, T>::value) {
+                mtx->lock();
+                try {
+                    memory.destroy<SMContainer>(key);
+                    memory.construct<SMContainer>(key)(object, *dataAllocator);
+                } catch (interprocess_exception e) {
+                    mtx->unlock();
+                    throw SMSystemException();
+                }
+                mtx->unlock();
+            } else {
+                throw WrongTypeException();
+            }
+        }
+    };
 
-template <typename T> class SMType : public SMObject {
-public:
-    T val;
+    template <typename T> class SMType : public SMObject {
+    public:
+        T val;
 
-    SMType(){}
-    SMType(T value) : val(value) {}
+        SMType(){}
+        SMType(T value) : val(value) {}
 
-    std::stringstream getSerializedData() override {
-        std::stringstream data;
-        text_oarchive oa(data);
-        oa << *this;
-        return data;
-    }
+        std::stringstream getSerializedData() override {
+            std::stringstream data;
+            text_oarchive oa(data);
+            oa << *this;
+            return data;
+        }
 
-private:
-    friend class boost::serialization::access;
-    template <typename Archive>
-    void serialize(Archive &ar, const unsigned int version)
-    {
-        ar & val;
-    }
-};
+    private:
+        friend class boost::serialization::access;
+        template <typename Archive>
+        void serialize(Archive &ar, const unsigned int version)
+        {
+            ar & val;
+        }
+    };
+}
 
 #endif

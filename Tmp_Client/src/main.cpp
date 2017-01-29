@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../lib/SMSystem.h"
+using namespace sm;
 
 int main() {
 
