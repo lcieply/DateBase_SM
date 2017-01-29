@@ -18,18 +18,7 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Event Listing</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QListWidget" name="listWidget"/>
-        </item>
-       </layout>
+       <layout class="QVBoxLayout" name="verticalLayout"/>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -46,24 +35,17 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>SM List         </string>
+               <string>Object Key</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="comboBox"/>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton">
-              <property name="text">
-               <string>Receive</string>
-              </property>
-             </widget>
+             <widget class="QLineEdit" name="lineEdit_3"/>
             </item>
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
             <item>
              <widget class="QLabel" name="label_3">
               <property name="sizePolicy">
@@ -83,7 +65,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QLabel" name="label_5">
               <property name="text">
@@ -94,10 +76,21 @@
             <item>
              <widget class="QLineEdit" name="lineEdit"/>
             </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
              <widget class="QPushButton" name="pushButton_2">
               <property name="text">
                <string>Send</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton">
+              <property name="text">
+               <string>Receive</string>
               </property>
              </widget>
             </item>
@@ -110,19 +103,12 @@
           <item>
            <widget class="QLabel" name="label_4">
             <property name="text">
-             <string>Your memory</string>
+             <string>Object from SM</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QListWidget" name="listWidget_2"/>
-          </item>
-          <item>
-           <widget class="QPushButton" name="pushButton_3">
-            <property name="text">
-             <string>Delete</string>
-            </property>
-           </widget>
           </item>
          </layout>
         </item>
