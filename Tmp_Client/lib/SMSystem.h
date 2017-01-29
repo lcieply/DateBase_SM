@@ -5,10 +5,17 @@
 #include <exception>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
+#include <boost/interprocess/allocators/allocator.hpp>
+#include <boost/interprocess/containers/string.hpp>
+#include <boost/interprocess/streams/vectorstream.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 using namespace boost::archive;
 using namespace boost::interprocess;
+
+typedef allocator<char, managed_shared_memory::segment_manager> CharAllocator;
+typedef basic_string <char, std::char_traits<char>, CharAllocator> SMString;
+typedef basic_vectorstream<SMString> SMBuffer;
 
 class WrongTypeException: public std::exception
 {
@@ -36,21 +43,18 @@ public:
 
 class SMContainer {
 public:
-    std::stringstream data;
-    const char* type;
+    SMBuffer* data;
+    SMString* type;
 
-    SMContainer(SMObject* obj);
-    ~SMContainer(){
-        data.flush();
-    }
+    SMContainer(SMObject* obj, CharAllocator&);
+    ~SMContainer();
 
     template<class T>
     void getObject(T& obj) {
-        if(strcmp(type, typeid(obj).name()) != 0) {
+        if(strcmp((*type).c_str(), typeid(obj).name()) != 0) {
             throw WrongTypeException();
         }
-
-        text_iarchive ia(data);
+        text_iarchive ia(*data);
         ia >> obj;
     }
 };
@@ -59,6 +63,7 @@ class SMSystem {
 private:
     managed_shared_memory memory;
     interprocess_mutex* mtx;
+    CharAllocator* dataAllocator;
 
 public:
     SMSystem();
@@ -87,7 +92,7 @@ public:
         if(std::is_base_of<SMObject, T>::value) {
             mtx->lock();
             try {
-                memory.construct<SMContainer>(key)(object);
+                memory.construct<SMContainer>(key)(object, *dataAllocator);
             } catch (interprocess_exception e) {
                 mtx->unlock();
                 throw SMSystemException();
@@ -103,7 +108,7 @@ public:
             mtx->lock();
             try {
                 memory.destroy<SMContainer>(key);
-                memory.construct<SMContainer>(key)(object);
+                memory.construct<SMContainer>(key)(object, *dataAllocator);
             } catch (interprocess_exception e) {
                 mtx->unlock();
                 throw SMSystemException();

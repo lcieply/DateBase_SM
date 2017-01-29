@@ -5,6 +5,7 @@
 SMSystem::SMSystem() {
     memory = managed_shared_memory(open_only,"SMSystem");
     mtx = memory.find<interprocess_mutex>("mtx").first;
+    dataAllocator = new CharAllocator(memory.get_segment_manager());
 }
 
 SMSystem::~SMSystem() {}
@@ -40,7 +41,11 @@ SMObject::~SMObject() {}
 
 //========SMContainer==========
 
-SMContainer::SMContainer(SMObject *obj) {
-    type = typeid(*obj).name();
-    data = obj->getSerializedData();
+SMContainer::SMContainer(SMObject *obj, CharAllocator& dataAllocator) {
+    type = new SMString(typeid(*obj).name(), dataAllocator);
+    std::stringstream objData = obj->getSerializedData();
+    data = new SMBuffer(dataAllocator);
+    *data << objData.str().c_str();
 }
+
+SMContainer::~SMContainer() {}
