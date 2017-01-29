@@ -1,23 +1,13 @@
 #include <iostream>
-#include <unistd.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
+#include <boost/interprocess/managed_shared_memory.hpp>
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
+using namespace boost::interprocess;
 
 int main()
 {
-    key_t key = ftok("/home/student/SharedMemory/", 1024);
-
-    int shm_id;
-    if((shm_id = shmget(key, 40000, IPC_CREAT | 0666)) < 0) {
-        perror("shmget");
-        return EXIT_FAILURE;
-    }
-
-    void* shm;
-    if((shm = shmat(shm_id, 0, 0)) == NULL) {
-        perror("shmat");
-        return EXIT_FAILURE;
-    }
+    shared_memory_object::remove("SMSystem");
+    managed_shared_memory memory(create_only,"SMSystem",65536);
+    memory.construct<interprocess_mutex>("mtx")();
 
     std::cout << "Serwer rozpoczal prace!" << std::endl;
 
@@ -27,7 +17,6 @@ int main()
         std::cin >> c;
     } while(c != 'q');
 
-    shmdt(shm);
-    shmctl(shm_id, IPC_RMID, NULL);
+    shared_memory_object::remove("SMSystem");
     return 0;
 }
