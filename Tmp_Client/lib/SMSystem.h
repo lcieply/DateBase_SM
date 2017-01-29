@@ -81,7 +81,12 @@ public:
                 mtx->unlock();
                 throw SMSystemException();
             }
-            res.first->getObject(object);
+            try {
+                res.first->getObject(object);
+            } catch (WrongTypeException e) {
+                mtx->unlock();
+                throw e;
+            }
             mtx->unlock();
         } else {
             throw WrongTypeException();
