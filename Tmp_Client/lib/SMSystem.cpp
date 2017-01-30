@@ -3,14 +3,11 @@ using namespace sm;
 
 //==========SMSystem===========
 
-SMSystem::SMSystem() {
-    memory = managed_shared_memory(open_only,"SMSystem");
+SMSystem::SMSystem() : memory(open_only,"SMSystem"), dataAllocator(memory.get_segment_manager()) {
     mtx = memory.find<interprocess_mutex>("mtx").first;
-    dataAllocator = new CharAllocator(memory.get_segment_manager());
 }
 
 SMSystem::~SMSystem() {
-    delete(dataAllocator);
 }
 
 void SMSystem::remove(const char *key) {
@@ -46,9 +43,7 @@ SMObject::~SMObject() {
 
 //========SMContainer==========
 
-SMContainer::SMContainer(SMObject *obj, CharAllocator& dataAllocator) {
-    type = new SMString(typeid(*obj).name(), dataAllocator);
-    std::stringstream objData = obj->getSerializedData();
-    data = new SMBuffer(dataAllocator);
-    *data << objData.str().c_str();
+SMContainer::SMContainer(SMObject *obj, CharAllocator dataAllocator) :
+        data(dataAllocator), type(typeid(*obj).name(), dataAllocator)  {
+    data.insert(0, obj->getSerializedData().str().c_str());
 }

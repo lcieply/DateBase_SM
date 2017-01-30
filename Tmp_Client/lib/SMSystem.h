@@ -7,6 +7,7 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/string.hpp>
+#include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -15,8 +16,7 @@ using namespace boost::interprocess;
 
 namespace sm {
     typedef allocator<char, managed_shared_memory::segment_manager> CharAllocator;
-    typedef basic_string <char, std::char_traits<char>, CharAllocator> SMString;
-    typedef basic_vectorstream<SMString> SMBuffer;
+    typedef basic_string<char, std::char_traits<char>, CharAllocator> SMString;
 
     class WrongTypeException: public std::exception
     {
@@ -36,6 +36,15 @@ namespace sm {
         }
     };
 
+    class NotFoundException: public std::exception
+    {
+    public:
+        virtual const char* what() const throw()
+        {
+            return "Object not found";
+        }
+    };
+
     class SMObject {
     public:
         virtual std::stringstream getSerializedData() = 0;
@@ -44,18 +53,21 @@ namespace sm {
 
     class SMContainer {
     public:
-        SMBuffer* data;
-        SMString* type;
+        SMString data;
+        SMString type;
 
-        SMContainer(SMObject* obj, CharAllocator&);
+        SMContainer(SMObject* obj, CharAllocator);
 
         template<class T>
         void getObject(T& obj) {
-            if(strcmp((*type).c_str(), typeid(obj).name()) != 0) {
+            if(strcmp((type).c_str(), typeid(obj).name()) != 0) {
                 throw WrongTypeException();
             }
-            text_iarchive ia(*data);
+            std::stringstream ss;
+            ss << data.c_str();
+            text_iarchive ia(ss);
             ia >> obj;
+
         }
     };
 
@@ -63,7 +75,7 @@ namespace sm {
     private:
         managed_shared_memory memory;
         interprocess_mutex* mtx;
-        CharAllocator* dataAllocator;
+        CharAllocator dataAllocator;
 
     public:
         SMSystem();
@@ -81,6 +93,10 @@ namespace sm {
                     mtx->unlock();
                     throw SMSystemException();
                 }
+                if(res.first == 0) {
+                    mtx->unlock();
+                    throw NotFoundException();
+                }
                 try {
                     res.first->getObject(object);
                 } catch (WrongTypeException e) {
@@ -97,7 +113,7 @@ namespace sm {
             if(std::is_base_of<SMObject, T>::value) {
                 mtx->lock();
                 try {
-                    memory.construct<SMContainer>(key)(object, *dataAllocator);
+                    memory.construct<SMContainer>(key)(object, dataAllocator);
                 } catch (interprocess_exception e) {
                     mtx->unlock();
                     throw SMSystemException();
@@ -113,7 +129,7 @@ namespace sm {
                 mtx->lock();
                 try {
                     memory.destroy<SMContainer>(key);
-                    memory.construct<SMContainer>(key)(object, *dataAllocator);
+                    memory.construct<SMContainer>(key)(object, dataAllocator);
                 } catch (interprocess_exception e) {
                     mtx->unlock();
                     throw SMSystemException();
