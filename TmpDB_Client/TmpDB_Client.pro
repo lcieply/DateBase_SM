@@ -13,11 +13,10 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    SMSystem.cpp
 
 HEADERS  += mainwindow.h \
     SMSystem.h
 
 FORMS    += mainwindow.ui
 
-LIBS    += -lrt -lpthread -lboost_serialization
+LIBS    += -lsmsystem
