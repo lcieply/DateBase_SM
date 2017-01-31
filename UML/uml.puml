@@ -1,0 +1,47 @@
+@startuml
+title OOP 2016 - Temporary Database - DIAGRAM 
+
+class SMObject {
+      +virtual std::stringstream getSerializedData() 
+      +virtual ~SMObject()
+}
+
+class SMContainer {
+        +SMString data;
+        +SMString type;
+        +SMContainer(SMObject* obj, CharAllocator)
+        +template<class T>
+        +void getObject(T& obj)
+        
+    }
+
+class SMSystem {
+       -managed_shared_memory memory
+       -interprocess_mutex* mtx
+       -CharAllocator dataAllocator
+
+        +SMSystem()
+        +~SMSystem()
+        +void remove(const char* key)
+        +bool contains(const char* key)
+
+        +template<class T> void fetch(const char* key, T& object) 
+        +template<class T> void insert(const char* key, T* object) 
+        +template<class T> void update(const char* key, T* object) 
+
+
+        +T val
+
+        +SMType(){}
+        +SMType(T value) : val(value)
+
+        +std::stringstream getSerializedData() override 
+
+        -friend class boost::serialization::access
+        -template <typename Archive>
+        -void serialize(Archive &ar, const unsigned int version)
+      
+    }
+SMSystem--|>SMObject
+SMContainer --|> SMObject
+@enduml
