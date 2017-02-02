@@ -1,7 +1,7 @@
 @startuml
 title OOP 2016 - Temporary Database - DIAGRAM 
 
-class SMObject {
+interface SMObject {
       +virtual std::stringstream getSerializedData() 
       +virtual ~SMObject()
 }
@@ -10,7 +10,6 @@ class SMContainer {
         +SMString data;
         +SMString type;
         +SMContainer(SMObject* obj, CharAllocator)
-        +template<class T>
         +void getObject(T& obj)
         
     }
@@ -28,7 +27,8 @@ class SMSystem {
         +template<class T> void fetch(const char* key, T& object) 
         +template<class T> void insert(const char* key, T* object) 
         +template<class T> void update(const char* key, T* object) 
-
+}
+class SMType{
 
         +T val
 
@@ -42,6 +42,8 @@ class SMSystem {
         -void serialize(Archive &ar, const unsigned int version)
       
     }
-SMSystem--|>SMObject
-SMContainer --|> SMObject
+ SMType  --|> SMObject
+SMObject ..>  SMContainer
+
+
 @enduml
