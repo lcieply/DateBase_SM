@@ -29,7 +29,7 @@ class SMSystem {
         +template<class T> void update(const char* key, T* object) 
 }
 class SMType{
-
+	+ Tval
         +SMType()
         +SMType(T value)
         +std::stringstream getSerializedData() override 
