@@ -12,7 +12,7 @@ class SMContainer {
         +SMContainer(SMObject* obj, CharAllocator)
         +void getObject(T& obj)
         
-    }
+}
 
 class SMSystem {
        -managed_shared_memory memory
@@ -30,19 +30,14 @@ class SMSystem {
 }
 class SMType{
 
-        +T val
-
-        +SMType(){}
-        +SMType(T value) : val(value)
-
+        +SMType()
+        +SMType(T value)
         +std::stringstream getSerializedData() override 
-
         -friend class boost::serialization::access
-        -template <typename Archive>
-        -void serialize(Archive &ar, const unsigned int version)
+	-template <typename Archive> void serialize(Archive, const unsigned int)
       
-    }
- SMType  --|> SMObject
+}
+SMType  --|> SMObject
 SMObject ..>  SMContainer
 
 
