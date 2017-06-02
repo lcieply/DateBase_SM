@@ -20,4 +20,4 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-LIBS    += -lrt -lpthread -lboost_serialization
+LIBS    += -lsmsystem
